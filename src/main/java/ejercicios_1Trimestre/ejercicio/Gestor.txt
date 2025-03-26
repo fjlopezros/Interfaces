@@ -1,0 +1,31 @@
+-- Crear la base de datos
+CREATE DATABASE Gestor;
+
+-- Usar la base de datos creada
+USE Gestor;
+
+-- Crear tabla de Comerciales
+CREATE TABLE Comerciales (
+    Nif_Comer VARCHAR(9) PRIMARY KEY, -- NIF del comercial, clave primaria
+    NomComerc VARCHAR(100) NOT NULL  -- Nombre del comercial
+);
+
+-- Crear tabla de Clientes
+CREATE TABLE Clientes (
+    Nif_Cliente VARCHAR(9) PRIMARY KEY, -- NIF del cliente, clave primaria
+    NomCliente VARCHAR(100) NOT NULL,  -- Nombre del cliente
+    Nif_Comer VARCHAR(9),              -- Relación con el comercial
+    FOREIGN KEY (Nif_Comer) REFERENCES Comerciales(Nif_Comer) -- Clave foránea
+);
+
+-- Insertar datos iniciales en Comerciales
+INSERT INTO Comerciales (Nif_Comer, NomComerc) VALUES 
+('12345678A', 'Carlos García'),
+('23456789B', 'Ana Martínez'),
+('34567890C', 'Pedro López');
+
+-- Insertar datos iniciales en Clientes
+INSERT INTO Clientes (Nif_Cliente, NomCliente, Nif_Comer) VALUES
+('98765432Z', 'Empresa Alpha', '12345678A'),
+('87654321Y', 'Empresa Beta', '12345678A'),
+('76543210X', 'Empresa Gamma', '23456789B');

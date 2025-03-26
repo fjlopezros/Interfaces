@@ -1,0 +1,111 @@
+1. Un listado de las obras.
+
+SELECT * FROM OBRAS;
+
+2. Listado sólo de las obras activas.
+
+SELECT *
+FROM OBRAS
+WHERE "FEC_TERMINA" >= DATE('now');
+
+
+3. Listado de todos los trabajadores con todos los datos que estimes oportuno.
+
+SELECT "NIF", "NOMBRE", "POBLACION", "PVP_HORA"
+FROM "TRABAJADORES";
+
+
+
+4. Listado de todos los servicios realizados, utiliza los criterios de ordenación de la
+información para que la información se muestre lo más detallada y clara posible.
+
+SELECT 
+    "SERVICIOS"."NIF_TRAB",
+    "TRABAJADORES"."NOMBRE",
+    "SERVICIOS"."COD_OBRA",
+    "OBRAS"."DESCRIPCION" AS "DESCRIPCION_OBRA",
+    "SERVICIOS"."FECHA",
+    "SERVICIOS"."HORA_ENT",
+    "SERVICIOS"."HORA_SAL",
+    "SERVICIOS"."EST_OBRA_SERV"
+FROM 
+    "SERVICIOS"
+INNER JOIN "TRABAJADORES" ON "SERVICIOS"."NIF_TRAB" = "TRABAJADORES"."NIF"
+INNER JOIN "OBRAS" ON "SERVICIOS"."COD_OBRA" = "OBRAS"."COD_OBRA"
+ORDER BY 
+    "SERVICIOS"."FECHA" ASC, 
+    "SERVICIOS"."COD_OBRA" ASC, 
+    "SERVICIOS"."NIF_TRAB" ASC;
+
+
+5. Listado de todas las horas trabajadas por un trabajador/a en cada obra. Este informe
+además tiene que tener un gráfico que muestre por cada trabajador el total de horas
+trabajadas.
+
+SELECT 
+    "SERVICIOS"."NIF_TRAB",
+    "TRABAJADORES"."NOMBRE",
+    "SERVICIOS"."COD_OBRA",
+    "OBRAS"."DESCRIPCION" AS "DESCRIPCION_OBRA",
+    SUM(
+        (CAST(SUBSTR("SERVICIOS"."HORA_SAL", 1, 2) AS INTEGER) * 60 + CAST(SUBSTR("SERVICIOS"."HORA_SAL", 3, 2) AS INTEGER))
+        - (CAST(SUBSTR("SERVICIOS"."HORA_ENT", 1, 2) AS INTEGER) * 60 + CAST(SUBSTR("SERVICIOS"."HORA_ENT", 3, 2) AS INTEGER))
+    ) / 60.0 AS "HORAS_TRABAJADAS"
+FROM 
+    "SERVICIOS"
+INNER JOIN "TRABAJADORES" ON "SERVICIOS"."NIF_TRAB" = "TRABAJADORES"."NIF"
+INNER JOIN "OBRAS" ON "SERVICIOS"."COD_OBRA" = "OBRAS"."COD_OBRA"
+GROUP BY 
+    "SERVICIOS"."NIF_TRAB",
+    "TRABAJADORES"."NOMBRE",
+    "SERVICIOS"."COD_OBRA",
+    "OBRAS"."DESCRIPCION"
+ORDER BY 
+    "SERVICIOS"."NIF_TRAB", "SERVICIOS"."COD_OBRA";
+
+
+6. Realizar un listado en el que aparezca el total de horas por día trabajadas en una obra y
+el coste por día y trabajador; así como los acumulados por obra y trabajador. Un
+ejemplo de este informe podría ser:
+
+SELECT 
+    "SERVICIOS"."COD_OBRA",
+    "OBRAS"."DESCRIPCION" AS "DESCRIPCION_OBRA",
+    "SERVICIOS"."FECHA",
+    "SERVICIOS"."NIF_TRAB",
+    "TRABAJADORES"."NOMBRE",
+    SUM(
+        (CAST(SUBSTR("SERVICIOS"."HORA_SAL", 1, 2) AS INTEGER) * 60 + CAST(SUBSTR("SERVICIOS"."HORA_SAL", 3, 2) AS INTEGER))
+        - (CAST(SUBSTR("SERVICIOS"."HORA_ENT", 1, 2) AS INTEGER) * 60 + CAST(SUBSTR("SERVICIOS"."HORA_ENT", 3, 2) AS INTEGER))
+    ) / 60.0 AS "HORAS_TRABAJADAS",
+    SUM(
+        (CAST(SUBSTR("SERVICIOS"."HORA_SAL", 1, 2) AS INTEGER) * 60 + CAST(SUBSTR("SERVICIOS"."HORA_SAL", 3, 2) AS INTEGER))
+        - (CAST(SUBSTR("SERVICIOS"."HORA_ENT", 1, 2) AS INTEGER) * 60 + CAST(SUBSTR("SERVICIOS"."HORA_ENT", 3, 2) AS INTEGER))
+    ) / 60.0 * "TRABAJADORES"."PVP_HORA" AS "COSTE_DIA",
+    (SELECT SUM(
+            (CAST(SUBSTR("S"."HORA_SAL", 1, 2) AS INTEGER) * 60 + CAST(SUBSTR("S"."HORA_SAL", 3, 2) AS INTEGER))
+            - (CAST(SUBSTR("S"."HORA_ENT", 1, 2) AS INTEGER) * 60 + CAST(SUBSTR("S"."HORA_ENT", 3, 2) AS INTEGER))
+        ) / 60.0 * "TRABAJADORES"."PVP_HORA"
+     FROM "SERVICIOS" AS "S"
+     WHERE "S"."COD_OBRA" = "SERVICIOS"."COD_OBRA" 
+     AND "S"."NIF_TRAB" = "SERVICIOS"."NIF_TRAB") AS "COSTE_ACUMULADO_TRABAJADOR",
+    (SELECT SUM(
+            (CAST(SUBSTR("S"."HORA_SAL", 1, 2) AS INTEGER) * 60 + CAST(SUBSTR("S"."HORA_SAL", 3, 2) AS INTEGER))
+            - (CAST(SUBSTR("S"."HORA_ENT", 1, 2) AS INTEGER) * 60 + CAST(SUBSTR("S"."HORA_ENT", 3, 2) AS INTEGER))
+        ) / 60.0 * "TRABAJADORES"."PVP_HORA"
+     FROM "SERVICIOS" AS "S"
+     WHERE "S"."COD_OBRA" = "SERVICIOS"."COD_OBRA") AS "COSTE_ACUMULADO_OBRA"
+FROM 
+    "SERVICIOS"
+INNER JOIN "TRABAJADORES" ON "SERVICIOS"."NIF_TRAB" = "TRABAJADORES"."NIF"
+INNER JOIN "OBRAS" ON "SERVICIOS"."COD_OBRA" = "OBRAS"."COD_OBRA"
+GROUP BY 
+    "SERVICIOS"."COD_OBRA",
+    "OBRAS"."DESCRIPCION",
+    "SERVICIOS"."FECHA",
+    "SERVICIOS"."NIF_TRAB",
+    "TRABAJADORES"."NOMBRE"
+ORDER BY 
+    "SERVICIOS"."COD_OBRA", "SERVICIOS"."FECHA", "SERVICIOS"."NIF_TRAB";
+
+
